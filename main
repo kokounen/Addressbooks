@@ -1,0 +1,700 @@
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <regex>
+#include <fstream>
+#define MAX 1000
+using namespace std;
+
+//判断邮箱合法性
+bool isValidChar(char c) {
+	return (isalnum(c) || c == '.' || c == '_' || c == '-' || c == '+');// 检查字符是否为合法邮箱字符
+}
+bool isEmailValid(const string& email) {
+	// 1. 检查@符号是否存在且位置合法
+	size_t atPos = email.find('@');
+	if (atPos == string::npos || atPos == 0 || atPos == email.length() - 1) {
+		return false;
+	}
+	// 2. 检查用户名合法性（@之前的部分）
+	string username = email.substr(0, atPos);
+	if (username.empty() || username[0] == '.' || username[username.length() - 1] == '.') {
+		return false;
+	}
+	for (char c : username) {
+		if (!isValidChar(c)) {
+			return false;
+		}
+	}
+	// 3. 检查域名合法性（@之后的部分）
+	string domain = email.substr(atPos + 1);
+	size_t dotPos = domain.find('.');
+	if (dotPos == string::npos || dotPos == 0 || dotPos == domain.length() - 1) {
+		return false;
+	}
+	// 4. 检查后缀长度（至少2位）
+	string suffix = domain.substr(dotPos + 1);
+	if (suffix.length() < 2) {
+		return false;
+	}
+	for (char c : domain) {
+		if (!isValidChar(c) && c != !'@') {
+			return false;
+		}
+	}
+	return true;
+}
+//判断手机号码合法性（11位，开头为13-19）
+bool isPhoneNumberValid(const string& phone) {	
+	regex pattern("^1[3-9]\\d{9}$");
+	return regex_match(phone, pattern);
+}
+// 判断邮编合法性（6位数字）
+bool isPostalCodeValid(const string& code) {
+	regex pattern("^\\d{6}$");
+	return std::regex_match(code, pattern);
+}
+
+//菜单界面
+void showMenu() {
+	cout << " 一一一通讯录一一一" << endl;
+	cout << "|1，添加\t   |" << endl;
+	cout << "|2，查询\t   |" << endl;
+	cout << "|3，删除\t   |" << endl;
+	cout << "|4，修改\t   |" << endl;
+	cout << "|5，排序\t   |" << endl;
+	cout << "|6，输出全部信息   |" << endl;
+	cout << "|7，写入文件\t   |" << endl;
+	cout << "|8，读取文件\t   |" << endl;
+	cout << "|0，退出\t   |" << endl;
+	cout << " 一一一一一一一一一" << endl;
+}
+
+//通讯录结构体
+struct Person {
+	string m_Name;
+	string m_Addr;
+	string m_Phone;
+	string m_Email;//E-mail
+	string m_Posstcode;//邮编
+	int m_Sex;//性别：1,男 2，女
+	int m_Age;
+};
+struct Addressbooks {
+	struct Person personArray[MAX];
+	int m_Size;//通讯录中人员个数
+};
+
+//添加联系人
+void addPerson(Addressbooks * abs)
+{
+	if (abs->m_Size == MAX) {//判断联系人是否已满
+		cout << "通讯录已满" << endl;
+		return;
+	}
+	else {//添加联系人
+
+		//姓名
+		string name;
+		cout << "请输入姓名" << endl;
+		cin >> name;
+		abs->personArray[abs->m_Size].m_Name = name;
+
+
+		// 性别
+		int sex = 0;
+		cout << "请输入性别" << endl;
+		cout << "1 --- 男" << endl;
+		cout << "2 --- 女" << endl;
+		while (true) {
+			cin >> sex;
+			if (sex == 1 || sex == 2) {
+				abs->personArray[abs->m_Size].m_Sex = sex;
+				break;
+			}
+			cout << "输入有误，请重新输入" << endl;
+
+		}
+		
+
+		// 年龄
+		cout << "请输入年龄" << endl;
+		int age = 0;
+		while (true) {
+			cin >> age;
+			if (age >=0 && age <=150) {
+				abs->personArray[abs->m_Size].m_Age = age;
+				break;
+			}
+			cout << "输入有误，请重新输入" << endl;
+
+		}
+
+		//家庭地址
+		string addr;
+		cout << "请输入对方家庭住址" << endl;
+		cin >> addr;
+		abs->personArray[abs->m_Size].m_Addr = addr;
+
+
+
+		//邮编
+		string code;
+		cout << "请输入邮编：";
+		while (true) {
+			cin >> code;
+
+			if (isPostalCodeValid(code)) {
+				abs->personArray[abs->m_Size].m_Posstcode = code;
+				break;
+			}
+			else {
+				cout << "邮编格式不合法，请输入6位数字。" << endl;
+			}
+
+		}
+
+
+
+		//电话号码
+		string phone;
+		cout << "请输入电话号码" << endl;
+		while (true) {
+			cin >> phone;
+			if (isPhoneNumberValid(phone)) {
+				abs->personArray[abs->m_Size].m_Phone = phone;
+				break;
+			}
+			else {
+				cout << "手机号码格式不合法，请输入11位数字，以13-19开头。" << endl;
+			}
+		}
+
+
+		//E-mail
+		string email;
+		cout << "请输入邮箱地址：";
+		while (true) {
+			cin >> email;
+
+			if (isEmailValid(email)) {
+				abs->personArray[abs->m_Size].m_Email = email;
+				break;
+			}
+			else {
+				cout << "邮箱格式不合法，请检查后重新输入。" << endl;
+			}
+		}
+
+		//更新通讯录人数
+		abs->m_Size++;
+		cout << "添加成功" << endl;
+	}
+}
+
+//显示全部联系人
+void showPerson(Addressbooks * abs)
+{
+	//判断通讯录中人数
+	if (abs->m_Size == 0) {
+		cout << "当前记录为空" << endl;
+	}
+	else {
+		for (int i = 0; i < abs->m_Size; i++) {
+			cout << "姓名：" << abs->personArray[i].m_Name << "\t";
+			cout << "性别：" << (abs->personArray[i].m_Sex == 1 ? "男" : "女") << "\t";
+			cout << "年龄：" << abs->personArray[i].m_Age << "\t";
+			cout << "家庭住址：" << abs->personArray[i].m_Addr << "\t";
+			cout << "邮编：" << abs->personArray[i].m_Posstcode << "\t";
+			cout << "电话号码：" << abs->personArray[i].m_Phone << "\t";
+			cout << "E-mail：" << abs->personArray[i].m_Email << endl;
+		}
+	}
+}
+
+//检测联系人是否存在
+//参数1 通讯录 参数2 对比姓名
+int isExist(Addressbooks* abs, string name) {
+	for (int i = 0; i < abs->m_Size; i++) {
+		//找到用户输入的姓名
+		if (abs->personArray[i].m_Name == name) {
+			return i;//找到联系人，返回联系人所在数组中的具体位置
+		}
+	}
+	return -1;//不存在返回-1
+}
+
+//删除指定联系人
+void deletePerson(Addressbooks * abs)
+{
+	cout << "请输入您要删除的联系人" << endl;
+	string name;
+	cin >> name;
+	//ret == -1未查到         //ret != -1 查到了
+	int ret = isExist(abs, name);
+
+	if (ret != -1) {
+		for (int i = ret; i < abs->m_Size; i++) {
+			//数据前移
+			abs->personArray[i] = abs->personArray[i + 1];
+		}
+		abs->m_Size--;//更新通讯录中人数
+		cout << "删除成功" << endl;
+	}
+	else {
+		cout << "未找到此人" << endl;
+	}
+}
+
+
+//查找联系人
+void findPerson(Addressbooks * abs) {
+	cout << "请输入您要查找的联系人" << endl;
+	string name;
+	cin >> name;
+	//ret == -1未查到         //ret != -1 查到了
+	int ret = isExist(abs, name);
+
+	if (ret != -1) {
+		cout << "姓名：" << abs->personArray[ret].m_Name << "\t";
+		cout << "性别：" << (abs->personArray[ret].m_Sex == 1 ? "男" : "女") << "\t";
+		cout << "年龄：" << abs->personArray[ret].m_Age << "\t";
+		cout << "家庭住址：" << abs->personArray[ret].m_Addr << "\t";
+		cout << "邮编：" << abs->personArray[ret].m_Posstcode << "\t";
+		cout << "电话号码：" << abs->personArray[ret].m_Phone << "\t";
+		cout << "E-mail：" << abs->personArray[ret].m_Email << endl;
+	}
+	else {
+		cout << "未找到此人" << endl;
+	}
+}
+
+//修改指定联系人信息
+void modifyPerson(Addressbooks * abs) {
+	cout << "请输入您要修改的联系人" << endl;
+	string name;
+	cin >> name;
+	int ret = isExist(abs, name);
+	if (ret != -1) {//找到联系人
+		cout << "找到联系人 [" << name << "]，以下是可修改项：" << endl;
+		cout << "|1，修改姓名\t   |" << endl;
+		cout << "|2，修改性别\t   |" << endl;
+		cout << "|3，修改年龄\t   |" << endl;
+		cout << "|4，修改家庭地址   |" << endl;
+		cout << "|5，修改邮编\t   |" << endl;
+		cout << "|6，修改电话号码   |" << endl;
+		cout << "|7，修改邮箱\t   |" << endl;
+		cout << "|0，退出修改\t   |" << endl;
+
+		while (true) { // 循环提供修改选项
+			int select;
+			cout << "请输入要修改的选项编号: ";
+			cin >> select;
+
+			switch (select) {
+			case 1: { // 修改姓名
+				string newName;
+				cout << "请输入新姓名: ";
+				cin >> newName;
+				abs->personArray[ret].m_Name = newName;
+				cout << "姓名修改成功！" << endl;
+				break;
+			}
+			case 2: { // 修改性别
+				int sex = 0;
+				cout << "请输入性别（1 --- 男  2 --- 女）: ";
+				while (true) {
+					cin >> sex;
+					if (sex == 1 || sex == 2) {
+						abs->personArray[ret].m_Sex = sex;
+						cout << "性别修改成功！" << endl;
+						break;
+					}
+					cout << "输入有误，请重新输入（1 --- 男  2 --- 女）" << endl;
+				}
+				break;
+			}
+			case 3: { // 修改年龄
+				int age = 0;
+				cout << "请输入年龄（0 - 150 之间）: ";
+				while (true) {
+					cin >> age;
+					if (age >= 0 && age <= 150) {
+						abs->personArray[ret].m_Age = age;
+						cout << "年龄修改成功！" << endl;
+						break;
+					}
+					cout << "输入有误，请重新输入（0 - 150 之间）" << endl;
+				}
+				break;
+			}
+			case 4: { // 修改家庭地址
+				string newAddr;
+				cout << "请输入新家庭住址: ";
+				cin >> newAddr;
+				abs->personArray[ret].m_Addr = newAddr;
+				cout << "家庭地址修改成功！" << endl;
+				break;
+			}
+			case 5: { // 修改邮编
+				string newCode;
+				cout << "请输入邮编（6位数字）: ";
+				while (true) {
+					cin >> newCode;
+					if (isPostalCodeValid(newCode)) {
+						abs->personArray[ret].m_Posstcode = newCode;
+						cout << "邮编修改成功！" << endl;
+						break;
+					}
+					cout << "邮编格式不合法，请输入6位数字。" << endl;
+				}
+				break;
+			}
+			case 6: { // 修改电话号码
+				string newPhone;
+				cout << "请输入新电话号码: ";
+				while (true) {
+					cin >> newPhone;
+					if (isPhoneNumberValid(newPhone)) {
+						abs->personArray[ret].m_Phone = newPhone;
+						cout << "电话号码修改成功！" << endl;
+						break;
+					}
+					cout << "手机号码格式不合法，请输入11位数字，以13 - 19开头。" << endl;
+				}
+				break;
+			}
+			case 7: { // 修改邮箱
+				string newEmail;
+				cout << "请输入新邮箱地址: ";
+				while (true) {
+					cin >> newEmail;
+					if (isEmailValid(newEmail)) {
+						abs->personArray[ret].m_Email = newEmail;
+						cout << "邮箱修改成功！" << endl;
+						break;
+					}
+					cout << "邮箱格式不合法，请检查后重新输入。" << endl;
+				}
+				break;
+			}
+			case 0: { // 退出修改
+				cout << "已退出修改联系人信息" << endl;
+				return; // 直接退出函数，结束修改流程
+			}
+			default: {
+				cout << "输入无效，请重新选择可修改的选项编号！" << endl;
+				break;
+			}
+			}
+		}
+	}
+	else { // 未找到联系人
+		cout << "查无此人" << endl;
+	}
+}
+
+
+
+
+//创建储存文件
+const string FILE_NAME = "contacts.txt"; // 数据存储文件
+vector <Person> scoreList;         // 用 vector 存储成绩记录，模拟链表/数组
+
+// 写入文件（覆盖写）
+void writeToFile(const Addressbooks * abs) {
+	ofstream file(FILE_NAME);
+	if (!file.is_open()) {
+		cout << "文件写入失败！" << endl;
+		return;
+	}
+
+	// 设置文件格式，便于后续读取
+	file << abs->m_Size << endl; // 先写入联系人数量
+
+	for (int i = 0; i < abs->m_Size; i++) {
+		// 使用特殊分隔符避免与用户输入内容冲突
+		file << abs->personArray[i].m_Name << "|"
+			<< abs->personArray[i].m_Sex << "|"
+			<< abs->personArray[i].m_Age << "|"
+			<< abs->personArray[i].m_Addr << "|"
+			<< abs->personArray[i].m_Posstcode << "|"
+			<< abs->personArray[i].m_Phone << "|"
+			<< abs->personArray[i].m_Email << endl;
+	}
+
+	file.close();
+	cout << "数据已写入文件：" << FILE_NAME << endl;
+	return;
+}
+
+// 读取文件
+void readFromFile(Addressbooks * abs) {
+	ifstream file(FILE_NAME);
+	if (!file.is_open()) {
+		cout << "文件不存在或读取失败，当前无历史数据。" << endl;
+		return;
+	}
+
+	abs->m_Size = 0; // 先清空原有数据
+
+	int count;
+	file >> count; // 读取联系人数量
+	file.ignore(); // 忽略数量后的换行符
+
+	string line;
+	for (int i = 0; i < count && abs->m_Size < MAX && getline(file, line); i++) {
+		stringstream ss(line);
+		string name, addr, phone, email, posstcode;
+		int sex, age;
+
+		// 使用特殊分隔符分割数据
+		getline(ss, name, '|');
+		ss >> sex; ss.ignore();
+		ss >> age; ss.ignore();
+		getline(ss, addr, '|');
+		getline(ss, posstcode, '|');
+		getline(ss, phone, '|');
+		getline(ss, email);
+
+		// 存入通讯录
+		abs->personArray[abs->m_Size].m_Name = name;
+		abs->personArray[abs->m_Size].m_Sex = sex;
+		abs->personArray[abs->m_Size].m_Age = age;
+		abs->personArray[abs->m_Size].m_Addr = addr;
+		abs->personArray[abs->m_Size].m_Posstcode = posstcode;
+		abs->personArray[abs->m_Size].m_Phone = phone;
+		abs->personArray[abs->m_Size].m_Email = email;
+
+		abs->m_Size++;
+	}
+
+	file.close();
+	cout << "已从文件读取 " << abs->m_Size << " 条数据" << endl;
+}
+
+
+// 按姓名升序排序
+void sortByNameAsc(Addressbooks* abs) {
+	for (int i = 0; i < abs->m_Size - 1; i++) {
+		for (int j = 0; j < abs->m_Size - 1 - i; j++) {
+			if (abs->personArray[j].m_Name > abs->personArray[j + 1].m_Name) {
+				// 交换两个联系人信息
+				Person temp = abs->personArray[j];
+				abs->personArray[j] = abs->personArray[j + 1];
+				abs->personArray[j + 1] = temp;
+			}
+		}
+	}
+	cout << "按姓名升序排序完成！" << endl;
+}
+
+// 按姓名降序排序
+void sortByNameDesc(Addressbooks* abs) {
+	for (int i = 0; i < abs->m_Size - 1; i++) {
+		for (int j = 0; j < abs->m_Size - 1 - i; j++) {
+			if (abs->personArray[j].m_Name < abs->personArray[j + 1].m_Name) {
+				// 交换两个联系人信息
+				Person temp = abs->personArray[j];
+				abs->personArray[j] = abs->personArray[j + 1];
+				abs->personArray[j + 1] = temp;
+			}
+		}
+	}
+	cout << "按姓名降序排序完成！" << endl;
+}
+
+// 按年龄升序排序
+void sortByAgeAsc(Addressbooks* abs) {
+	for (int i = 0; i < abs->m_Size - 1; i++) {
+		for (int j = 0; j < abs->m_Size - 1 - i; j++) {
+			if (abs->personArray[j].m_Age > abs->personArray[j + 1].m_Age) {
+				// 交换两个联系人信息
+				Person temp = abs->personArray[j];
+				abs->personArray[j] = abs->personArray[j + 1];
+				abs->personArray[j + 1] = temp;
+			}
+		}
+	}
+	cout << "按年龄升序排序完成！" << endl;
+}
+
+// 按年龄降序排序
+void sortByAgeDesc(Addressbooks* abs) {
+	for (int i = 0; i < abs->m_Size - 1; i++) {
+		for (int j = 0; j < abs->m_Size - 1 - i; j++) {
+			if (abs->personArray[j].m_Age < abs->personArray[j + 1].m_Age) {
+				// 交换两个联系人信息
+				Person temp = abs->personArray[j];
+				abs->personArray[j] = abs->personArray[j + 1];
+				abs->personArray[j + 1] = temp;
+			}
+		}
+	}
+	cout << "按年龄降序排序完成！" << endl;
+}
+
+// 按电话号码升序排序
+void sortByPhoneAsc(Addressbooks* abs) {
+	for (int i = 0; i < abs->m_Size - 1; i++) {
+		for (int j = 0; j < abs->m_Size - 1 - i; j++) {
+			if (abs->personArray[j].m_Phone > abs->personArray[j + 1].m_Phone) {
+				// 交换两个联系人信息
+				Person temp = abs->personArray[j];
+				abs->personArray[j] = abs->personArray[j + 1];
+				abs->personArray[j + 1] = temp;
+			}
+		}
+	}
+	cout << "按电话号码升序排序完成！" << endl;
+}
+
+// 按电话号码降序排序
+void sortByPhoneDesc(Addressbooks* abs) {
+	for (int i = 0; i < abs->m_Size - 1; i++) {
+		for (int j = 0; j < abs->m_Size - 1 - i; j++) {
+			if (abs->personArray[j].m_Phone < abs->personArray[j + 1].m_Phone) {
+				// 交换两个联系人信息
+				Person temp = abs->personArray[j];
+				abs->personArray[j] = abs->personArray[j + 1];
+				abs->personArray[j + 1] = temp;
+			}
+		}
+	}
+	cout << "按电话号码降序排序完成！" << endl;
+}
+
+// 排序菜单界面
+void showSortMenu() {
+	cout << " 一一一一排序功能一一一一" << endl;
+	cout << "| 1，按姓名升序排序      |" << endl;
+	cout << "| 2，按姓名降序排序      |" << endl;
+	cout << "| 3，按年龄升序排序      |" << endl;
+	cout << "| 4，按年龄降序排序      |" << endl;
+	cout << "| 5，按电话号码升序排序  |" << endl;
+	cout << "| 6，按电话号码降序排序  |" << endl;
+	cout << "| 0，返回主菜单          |" << endl;
+	cout << " 一一一一一一一一一一一一" << endl;
+}
+
+// 排序功能实现
+void sortPerson(Addressbooks* abs) {
+	if (abs->m_Size == 0) {
+		cout << "通讯录为空，无法排序！" << endl;
+		return;
+	}
+
+	int select = 0;
+	while (true) {
+		showSortMenu();
+		cin >> select;
+
+		switch (select) {
+		case 1:
+			sortByNameAsc(abs);
+			return;
+		case 2:
+			sortByNameDesc(abs);
+			return;
+		case 3:
+			sortByAgeAsc(abs);
+			return;
+		case 4:
+			sortByAgeDesc(abs);
+			return;
+		case 5:
+			sortByPhoneAsc(abs);
+			return;
+		case 6:
+			sortByPhoneDesc(abs);
+			return;
+		case 0:
+			system("cls");
+			return;
+		default:
+			cout << "输入无效，请重新选择！" << endl;
+			break;
+		}
+	}
+}
+
+int main()
+{
+	Addressbooks abs;//通讯录结构体变量
+	abs.m_Size = 0;//初始化人员个数
+
+
+
+	int select ;//创建用户选着输入变量
+
+	while (true)//重复显示菜单
+	{
+		showMenu();//菜单调用
+
+		cin >> select;//用户输入
+
+		switch (select)
+		{
+		case 1://添加联系人
+			addPerson(&abs);
+			system("pause");
+			system("cls");
+			break;
+
+		case 2://查询联系人
+			findPerson(&abs);
+			system("pause");
+			system("cls");
+			break;
+
+		case 3://删除联系人
+			deletePerson(&abs);
+			system("pause");
+			system("cls");
+			break;
+
+		case 4://修改
+			modifyPerson(&abs);
+			system("pause");
+			system("cls");
+			break;
+
+		case 5://排序
+			sortPerson(&abs);
+			system("pause");
+			system("cls");
+			break;
+
+		case 6://输出全部信息
+			showPerson(&abs);
+			system("pause");
+			system("cls");
+			break;
+
+		case 7://写入文件
+			writeToFile(&abs);
+			system("pause");
+			system("cls");
+			break;
+
+		case 8://读取文件
+			readFromFile(&abs);
+			system("pause");
+			system("cls");
+			break;
+
+		case 0://退出
+			cout << "已退出通讯录" << endl;
+			system("pause");
+			return 0;
+			break;
+
+		default:
+			cout << "输入有误，请重新输入" << endl;
+			system("pause");
+			system("cls");
+		}
+	}
+	system("pause");
+	return 0;
+}
