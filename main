@@ -76,7 +76,7 @@ struct Person {
 	string m_Addr;
 	string m_Phone;
 	string m_Email;//E-mail
-	string m_Posstcode;//邮编
+	string m_Postcode;//邮编
 	int m_Sex;//性别：1,男 2，女
 	int m_Age;
 };
@@ -145,7 +145,7 @@ void addPerson(Addressbooks * abs)
 			cin >> code;
 
 			if (isPostalCodeValid(code)) {
-				abs->personArray[abs->m_Size].m_Posstcode = code;
+				abs->personArray[abs->m_Size].m_Postcode = code;
 				break;
 			}
 			else {
@@ -205,7 +205,7 @@ void showPerson(Addressbooks * abs)
 			cout << "性别：" << (abs->personArray[i].m_Sex == 1 ? "男" : "女") << "\t";
 			cout << "年龄：" << abs->personArray[i].m_Age << "\t";
 			cout << "家庭住址：" << abs->personArray[i].m_Addr << "\t";
-			cout << "邮编：" << abs->personArray[i].m_Posstcode << "\t";
+			cout << "邮编：" << abs->personArray[i].m_Postcode << "\t";
 			cout << "电话号码：" << abs->personArray[i].m_Phone << "\t";
 			cout << "E-mail：" << abs->personArray[i].m_Email << endl;
 		}
@@ -260,7 +260,7 @@ void findPerson(Addressbooks * abs) {
 		cout << "性别：" << (abs->personArray[ret].m_Sex == 1 ? "男" : "女") << "\t";
 		cout << "年龄：" << abs->personArray[ret].m_Age << "\t";
 		cout << "家庭住址：" << abs->personArray[ret].m_Addr << "\t";
-		cout << "邮编：" << abs->personArray[ret].m_Posstcode << "\t";
+		cout << "邮编：" << abs->personArray[ret].m_Postcode << "\t";
 		cout << "电话号码：" << abs->personArray[ret].m_Phone << "\t";
 		cout << "E-mail：" << abs->personArray[ret].m_Email << endl;
 	}
@@ -342,7 +342,7 @@ void modifyPerson(Addressbooks * abs) {
 				while (true) {
 					cin >> newCode;
 					if (isPostalCodeValid(newCode)) {
-						abs->personArray[ret].m_Posstcode = newCode;
+						abs->personArray[ret].m_Postcode = newCode;
 						cout << "邮编修改成功！" << endl;
 						break;
 					}
@@ -418,7 +418,7 @@ void writeToFile(const Addressbooks * abs) {
 			<< abs->personArray[i].m_Sex << "|"
 			<< abs->personArray[i].m_Age << "|"
 			<< abs->personArray[i].m_Addr << "|"
-			<< abs->personArray[i].m_Posstcode << "|"
+			<< abs->personArray[i].m_Postcode << "|"
 			<< abs->personArray[i].m_Phone << "|"
 			<< abs->personArray[i].m_Email << endl;
 	}
@@ -462,7 +462,7 @@ void readFromFile(Addressbooks * abs) {
 		abs->personArray[abs->m_Size].m_Sex = sex;
 		abs->personArray[abs->m_Size].m_Age = age;
 		abs->personArray[abs->m_Size].m_Addr = addr;
-		abs->personArray[abs->m_Size].m_Posstcode = posstcode;
+		abs->personArray[abs->m_Size].m_Postcode = posstcode;
 		abs->personArray[abs->m_Size].m_Phone = phone;
 		abs->personArray[abs->m_Size].m_Email = email;
 
